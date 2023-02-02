@@ -1,0 +1,3 @@
+fastapi_simple_security==1.*
+gensim>=4,<5
+uvicorn
