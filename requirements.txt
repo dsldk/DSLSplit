@@ -1,3 +1,4 @@
 fastapi_simple_security==1.*
 gensim>=4,<5
 uvicorn
+charsplit @ git+https://github.com/dtuggener/CharSplit.git@9710624ef0b0df0edd12a721c33533ff1d07b557

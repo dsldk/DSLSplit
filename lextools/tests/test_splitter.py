@@ -25,7 +25,7 @@ def test_spliiter() -> None:
 
     assert response.status_code == status.HTTP_200_OK
 
-    assert response.json() == {"lemma": "operakoncert",
+    assert response.json() == {"word": "operakoncert",
                                "subtokens": [["opera", "koncert"]],
                                "scores": [0.09712350339086326]
                                }
@@ -64,8 +64,3 @@ def test_training_splitter() -> None:
     assert len(ngram_probs.get("prefix", {}))
     assert len(ngram_probs.get("infix", {}))
     assert len(ngram_probs.get("suffix", {}))
-
-
-
-
-

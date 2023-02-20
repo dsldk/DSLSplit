@@ -1,11 +1,12 @@
 """FastAPI service for wordres."""
 import logging
 import pandas as pd
-from fastapi import FastAPI, status
-from fastapi_simple_security import api_key_router, api_key_security
+from fastapi import FastAPI
+from fastapi_simple_security import api_key_router
 from fastapi.responses import JSONResponse
+from starlette.responses import PlainTextResponse
 
-# from wordres import CONFIG
+from lextools import CONFIG
 from splitter import Splitter2
 
 logging.basicConfig(format="%(asctime)s : %(levelname)s : %(message)s",
@@ -14,24 +15,40 @@ logging.basicConfig(format="%(asctime)s : %(levelname)s : %(message)s",
 
 logger = logging.getLogger(__name__)
 
-TITLE = "LexTools"
 
-app = FastAPI(title=TITLE,
-              description="Lorem ipsum",
+title = CONFIG.get('splitter', 'title')
+description = CONFIG.get('splitter', 'description')
+compound_split_probabilities = CONFIG.get('splitter', 'prob_file')
+word_file_path = CONFIG.get('splitter', 'word_file')
+
+app = FastAPI(title=title,
+              description="description",
               )
 
 app.include_router(api_key_router, prefix="/auth", tags=["_auth"])
 
-# todo skal ikke hardkodes her
-compound_split_probabilities = "data/da_ngram_probs.json"
-lemmas = pd.read_csv("data/lemmaliste_ddo.csv", sep=";", usecols=[0], names=['name'])
+
+@app.get("/health", response_class=PlainTextResponse)
+def healthcheck() -> str:
+    """Healthcheck, for use in automatic ."""
+    return "200"
+
+
+lemmas = pd.read_csv(word_file_path, sep=";", usecols=[0], names=['name'])
 lemmas = lemmas.name.drop_duplicates().values
 
 splitter = Splitter2(language="da", lemma_list=lemmas).load_from_filepath(compound_split_probabilities)
 
 
-@app.get("/split/{lemma}", response_class=JSONResponse)
-def split(lemma: str, lang: str = "da", period: str | None = None) -> JSONResponse:
+@app.get("/split/{word}", response_class=JSONResponse)
+def split(word: str, lang: str = "da", period: str | None = None) -> JSONResponse:
+    """
+    Return word split into tokens and scores and scores for each possible split
+
+    - **word**: word to split into subtokens
+    - **lang**: language ("da" for Danish or "de" for german)
+    - **period**: for future functionality
+    """
     splitter.language = lang
-    splits, scores = splitter.easy_split(lemma)
-    return JSONResponse(content={"lemma": lemma, "subtokens": splits, "scores": scores})
+    splits, scores = splitter.easy_split(word)
+    return JSONResponse(content={"word": word, "subtokens": splits, "scores": scores})
