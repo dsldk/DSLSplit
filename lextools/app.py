@@ -50,5 +50,5 @@ def split(word: str, lang: str = "da", period: str | None = None) -> JSONRespons
     - **period**: for future functionality
     """
     splitter.language = lang
-    splits, scores = splitter.easy_split(word)
-    return JSONResponse(content={"word": word, "subtokens": splits, "scores": scores})
+    splits = splitter.easy_split(word)
+    return JSONResponse(content={"word": word, "splits": splits})

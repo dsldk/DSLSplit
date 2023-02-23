@@ -26,8 +26,10 @@ def test_spliiter() -> None:
     assert response.status_code == status.HTTP_200_OK
 
     assert response.json() == {"word": "operakoncert",
-                               "subtokens": [["opera", "koncert"]],
-                               "scores": [0.09712350339086326]
+                               "splits": [{"subtokens": ["opera", "koncert"],
+                                             "score": 0.09712350339086326,
+                                             "fuge": ""
+                                           }]
                                }
 
 

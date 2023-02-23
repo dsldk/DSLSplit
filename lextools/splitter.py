@@ -21,7 +21,7 @@ class Splitter2:
         :return: List of all splits
         """
 
-        def cut_fuge(word_slice: str, language: str) -> str:
+        def cut_fuge(word_slice: str, language: str) -> tuple:
             min_len = 3
             end_slices = ["s"]
             if language == "de":
@@ -32,9 +32,9 @@ class Splitter2:
 
             if len(word_slice) >= min_len + 1:
                 if any([word_slice.endswith(end_slice) for end_slice in end_slices]):
-                    return word_slice[:-1]
+                    return word_slice[:-1], word_slice[-1]
 
-            return word_slice
+            return word_slice, ""
 
         word = word.lower()
 
@@ -49,7 +49,7 @@ class Splitter2:
             pre_slice = word[:n]
 
             # Cut of Fugen-S
-            pre_slice = cut_fuge(pre_slice, self.language)
+            pre_slice, fuge = cut_fuge(pre_slice, self.language)
 
             # Start, in, and end probabilities
             pre_slice_prob = list()
@@ -81,7 +81,7 @@ class Splitter2:
                 if not start_slice_prob:
                     ngram = word[n:n + k]
                     # Cut Fugen-S
-                    ngram = cut_fuge(ngram, language=self.language)
+                    ngram, fuge2 = cut_fuge(ngram, language=self.language)
 
                     start_slice_prob.append(self.ngram_probs["prefix"].get(ngram, -1))
 
@@ -92,7 +92,7 @@ class Splitter2:
             pre_slice_prob = max(pre_slice_prob)  # Highest, best pre_slice
             in_slice_prob = min(in_slice_prob)  # Lowest, punish splitting of good in_grams
             score = start_slice_prob - in_slice_prob + pre_slice_prob
-            scores.append((score, word[:n], word[n:]))
+            scores.append((score, word[:n], word[n:], fuge))
 
         scores.sort(reverse=True)
 
@@ -116,18 +116,24 @@ class Splitter2:
         # Lower() because charsplit is developed for German nouns
         output = [(score, split) for score, *split in splits if score > min_score]
 
-        scores = []
         verified = []
         for score, item in output:
-            ver_items = []
-            for part in item:
-                if part[-1] == 's' and part not in self.lemma_list and part[:-1] in self.lemma_list:
-                    ver_items.append(part[:-1])
-                elif part[-1] == 'e' and part not in self.lemma_list and part[:-1] in self.lemma_list:
-                    ver_items.append(part[:-1])
+            ver_items = {"subtokens": []}
+
+            ver_items["fuge"] = item[-1]
+            split = item[:-1]
+
+            for part in split:
+                if part[-1] == "s" and part not in self.lemma_list and part[:-1] in self.lemma_list:
+                    ver_items["subtokens"].append(part[:-1])
+                    ver_items["fuge"] = "s"
+                elif part[-1] == "e" and part not in self.lemma_list and part[:-1] in self.lemma_list:
+                    ver_items["subtokens"].append(part[:-1])
+                    ver_items["fuge"] = "e"
                 else:
-                    ver_items.append(part)
-            scores.append(score)
+                    ver_items["subtokens"].append(part)
+
+            ver_items["score"] = score
             verified.append(ver_items)
 
-        return (verified, scores) if len(verified) else ([word], -1.0)
+        return verified if len(verified) else [{"subtokens": [word], "score": -1, "fuge": ""}]
