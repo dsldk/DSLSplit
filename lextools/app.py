@@ -1,29 +1,31 @@
 """FastAPI service for wordres."""
 import logging
-import pandas as pd
 from fastapi import FastAPI
 from fastapi_simple_security import api_key_router
 from fastapi.responses import JSONResponse
 from starlette.responses import PlainTextResponse
 
 from lextools import CONFIG
-from splitter import Splitter2
+from lextools.easy_split import load_probabilities, split_compound
 
-logging.basicConfig(format="%(asctime)s : %(levelname)s : %(message)s",
-                    level=logging.INFO
-                    )
+# from splitter import Splitter2
+
+logging.basicConfig(
+    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO
+)
 
 logger = logging.getLogger(__name__)
 
 
-title = CONFIG.get('splitter', 'title')
-description = CONFIG.get('splitter', 'description')
-compound_split_probabilities = CONFIG.get('splitter', 'prob_file')
-word_file_path = CONFIG.get('splitter', 'word_file')
+title = CONFIG.get("splitter", "title")
+description = CONFIG.get("splitter", "description")
+compound_split_probabilities = CONFIG.get("splitter", "prob_file")
+word_file_path = CONFIG.get("splitter", "word_file")
 
-app = FastAPI(title=title,
-              description="description",
-              )
+app = FastAPI(
+    title=title,
+    description="description",
+)
 
 app.include_router(api_key_router, prefix="/auth", tags=["_auth"])
 
@@ -34,21 +36,35 @@ def healthcheck() -> str:
     return "200"
 
 
-lemmas = pd.read_csv(word_file_path, sep=";", usecols=[0], names=['name'])
-lemmas = lemmas.name.drop_duplicates().values
+# lemmas = pd.read_csv(word_file_path, sep=";", usecols=[0], names=['name'])
+# lemmas = lemmas.name.drop_duplicates().values
 
-splitter = Splitter2(language="da", lemma_list=lemmas).load_from_filepath(compound_split_probabilities)
+# splitter = Splitter2(language="da", lemma_list=lemmas).load_from_filepath(compound_split_probabilities)
+
+
+# @app.get("/split/{word}", response_class=JSONResponse)
+# def split(word: str, lang: str = "da", period: str | None = None) -> JSONResponse:
+#     """
+#     Return word split into tokens and scores and scores for each possible split
+
+#     - **word**: word to split into subtokens
+#     - **lang**: language ("da" for Danish or "de" for german)
+#     - **period**: for future functionality
+#     """
+#     splitter.language = lang
+#     splits = splitter.easy_split(word)
+#     return JSONResponse(content={"word": word, "splits": splits})
+
+probabilities = load_probabilities()
 
 
 @app.get("/split/{word}", response_class=JSONResponse)
-def split(word: str, lang: str = "da", period: str | None = None) -> JSONResponse:
+def split(word: str) -> JSONResponse:
     """
     Return word split into tokens and scores and scores for each possible split
 
     - **word**: word to split into subtokens
-    - **lang**: language ("da" for Danish or "de" for german)
-    - **period**: for future functionality
+
     """
-    splitter.language = lang
-    splits = splitter.easy_split(word)
-    return JSONResponse(content={"word": word, "splits": splits})
+    splits = split_compound(word, probabilities)
+    return JSONResponse(content=splits)

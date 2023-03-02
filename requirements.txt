@@ -1,5 +1,10 @@
-fastapi
-fastapi_simple_security==1.*
-pandas
+aiohttp
+#fastapi
+fastapi_simple_security~=1.2.0
+#pandas
+pytest
+pytest-asyncio
+pytest-env
+requests
 uvicorn
-charsplit @ git+https://github.com/dtuggener/CharSplit.git@9710624ef0b0df0edd12a721c33533ff1d07b557
+#charsplit @ git+https://github.com/dtuggener/CharSplit.git@9710624ef0b0df0edd12a721c33533ff1d07b557
