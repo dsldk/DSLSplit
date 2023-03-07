@@ -1,4 +1,5 @@
 import logging
+import os
 import pickle
 import tempfile
 from collections import defaultdict
@@ -47,25 +48,59 @@ def train_splitter(data: list) -> dict:
 
 
 @timeit
-def load_probabilities() -> dict:
+def load_probabilities(force_training: bool = False) -> dict:
     """Load the trigram probabilities."""
-    # Try to unpickle trigram probabilities. If that fails, train the splitter
-    # and pickle the trigram probabilities.
-    pickle_file = tempfile.gettempdir() + "/easysplit_probs.pickle"
-    try:
-        with open(pickle_file, "rb") as f:
-            probalities = pickle.load(f)
-        logger.info(f"Probabilities loaded from {pickle_file}")
-    except FileNotFoundError:
-        logger.info("Probabilities not found. Training the splitter...")
-        data_file = CONFIG.get("easy_split", "data_file")
-        with open(data_file, "r") as f:
-            data = f.read().splitlines()
-            probalities = train_splitter(data)
-        with open(pickle_file, "wb") as f:
-            pickle.dump(probalities, f)
+    variants = CONFIG.get("brute", "variants")
+    result = {}
+    for variant in variants.split(","):
+        variant = variant.strip()
+        # Try to unpickle trigram probabilities. If that fails, train the splitter
+        # and pickle the trigram probabilities.
+        pickle_file = os.path.join(
+            tempfile.gettempdir(), f"brute_split_probs_{variant}.pickle"
+        )
 
-    return probalities
+        if not force_training:
+            try:
+                with open(pickle_file, "rb") as f:
+                    probabilities = pickle.load(f)
+                logger.info(f"Probabilities loaded from {pickle_file}")
+                result[variant] = probabilities
+                continue
+            except FileNotFoundError:
+                logger.info("Probabilities not found. Training the splitter...")
+
+        data_files = CONFIG.get(f"brute_{variant}", "data_files").split(",")
+        data_files = [item.split(":") for item in data_files]
+        print(data_files)
+
+        data = []
+        for data_file, preprocess_method in data_files:
+            with open(data_file, "r") as f:
+                data += preprocess_data(f.read().splitlines(), preprocess_method)
+        data = list(set(data))
+        probabilities = train_splitter(data)
+        with open(pickle_file, "wb") as f:
+            pickle.dump(probabilities, f)
+        result[variant] = probabilities
+
+    return result
+
+
+def preprocess_data(data: list, todo: str = "") -> list:
+    """Preprocess the data."""
+    output = []
+    for line in data:
+        if todo == "modernize_danish":
+            # Get all values from CONFIG
+            replacements = CONFIG.get("brute_modernize_danish", "replacements").split(
+                ","
+            )
+            replacements = [item.split(":") for item in replacements]
+            for old, new in replacements:
+                line = line.replace(old, new)
+        output.append(line)
+    return output
 
 
 @timeit
@@ -117,7 +152,7 @@ def split_compound(compound, probabilities: dict) -> dict:
 
 
 if __name__ == "__main__":
-    probabilities = load_probabilities()
+    probabilities = load_probabilities(force_training=True)
     # Split the words
     WORDS = [
         "skaderede",
@@ -141,5 +176,8 @@ if __name__ == "__main__":
         "skovsnegl",
         "ihændehaver",
     ]
-    for word in WORDS:
-        print(word, split_compound(word, probabilities))
+    for variant in ("nudansk", "yngrenydansk"):
+        print("=======")
+        print(variant)
+        for word in WORDS:
+            print(word, split_compound(word, probabilities[variant]))
