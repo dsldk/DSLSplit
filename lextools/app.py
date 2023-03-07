@@ -11,7 +11,7 @@ from lextools import CONFIG
 from lextools.brute_split import load_probabilities, split_compound
 from lextools.train_splitter import train_splitter
 
-from splitter import Splitter2
+from lextools.splitter import Splitter2
 
 logging.basicConfig(
     format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO
@@ -44,7 +44,7 @@ compound_split_probabilities = train_splitter(word_file_path, "careful", lang="d
 lemmas = pd.read_csv(word_file_path, sep=";", usecols=[0], names=["name"])
 lemmas = lemmas.name.drop_duplicates().values
 
-splitter = Splitter2(language="da", lemma_list=lemmas).load_from_filepath(
+splitter = Splitter2(language="da", lemma_list=list(lemmas)).load_from_filepath(
     compound_split_probabilities
 )
 

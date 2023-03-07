@@ -1,31 +1,39 @@
 # lextools
-Misc. tools for NLP based on DLS's resources
 
-## Installation
+CompoundSplitter for Danish
 
-1. Activate a virtual environment with python3.11
+## Download
 
-2. 
-
-```
+```bash
 git clone https://github.com/dsldk/lextools
+```
+
+## Install dependencies
+
+```bash
+[ACTIVATE VIRTUAL INVORENMENT]
 pip install -r requirements.txt
 pip install -e .
 ```
 
-## Train probabilities
+## Run in development mode
 
-This step can be skipped when using easy_split.
-
+```bash
+cd lextools
+uvicorn app:app --reload
 ```
+
+## Run a Docker container
+
+```bash
+docker compose up -d
+```
+
+## Using the modules
+
+### Train splitter probabilities
+
+```bash
 cd lextools
 python train_splitter.py -i /path/to/uniq_lemma_ddo.csv -n da_test
-
 ```
-
-## Start webservice in development mode
-
-```
-uvicorn app:app --reload
-
-
