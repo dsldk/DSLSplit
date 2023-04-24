@@ -1,30 +1,9 @@
-import logging
 import os
 import pickle
 import tempfile
 from collections import defaultdict
 
-from lextools import CONFIG
-
-logging.basicConfig(
-    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-
-import time
-from functools import wraps
-
-
-def timeit(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        start = time.perf_counter()
-        result = func(*args, **kwargs)
-        end = time.perf_counter()
-        logger.info(f"{func.__name__} took {end - start:.6f} seconds to complete")
-        return result
-
-    return wrapper
+from dslsplit import CONFIG, logger, timeit
 
 
 @timeit

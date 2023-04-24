@@ -1,6 +1,6 @@
 aiohttp
-#fastapi
-fastapi_simple_security~=1.2.0
+git+https://github.com/dsldk/fastapi_simple_security.git
+#fastapi_simple_security~=1.2.0
 pandas
 pytest
 pytest-asyncio
