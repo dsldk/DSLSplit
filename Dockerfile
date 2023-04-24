@@ -9,7 +9,7 @@ ENV APP_HOME /code
 WORKDIR $APP_HOME
 COPY ./requirements.txt ./
 COPY ./setup.py ./
-COPY ./lextools ./lextools
+COPY ./dslsplit ./dslsplit
 
 # Install dependencies.
 RUN pip install -r requirements.txt

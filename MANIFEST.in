@@ -1,1 +1,1 @@
-include lexibot/*.ini
+include dslsplit/*.ini
