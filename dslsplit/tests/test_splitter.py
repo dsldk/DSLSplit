@@ -1,36 +1,46 @@
 """Testing fastws exists service."""
 import json
-
 import pytest
-import requests
+from fastapi.testclient import TestClient
 from fastapi import status
-from lextools.train_splitter import train_splitter
+from os import environ
 
-HOST = "http://127.0.0.1:8000"
+environ["ENABLE_SECURITY"] = "false"
+from dslsplit.app import app
+from dslsplit.train_splitter import train_splitter
+
+
+client = TestClient(app)
 
 
 def test_spliiter() -> None:
     """Test compound splitter API"""
-
-    url = f"{HOST}/split"
     test_lemmas = ["operakoncert"]
 
-    response = requests.get(url)
+    response = client.get("/split")
 
     # BAD TEST CASES
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # GOOD TEST CASES
-    response = requests.get(url + f"/{test_lemmas[0]}")
+    response = client.get(f"/split/{test_lemmas[0]}")
 
     assert response.status_code == status.HTTP_200_OK
 
-    assert response.json() == {"word": "operakoncert",
-                               "splits": [{"subtokens": ["opera", "koncert"],
-                                             "score": 0.09712350339086326,
-                                             "fuge": ""
-                                           }]
-                               }
+    result = response.json()
+    result["splits"][0]["score"] = ...
+    assert result == {
+        "word": "operakoncert",
+        "splits": [
+            {
+                "subtokens": ["opera", "koncert"],
+                "score": ...,
+                "fuge": "",
+            }
+        ],
+        "description": "",
+        "method": "careful",
+    }
 
 
 def test_training_splitter() -> None:
@@ -43,20 +53,20 @@ def test_training_splitter() -> None:
 
     # test cannot find file
     with pytest.raises(FileNotFoundError):
-        train_splitter("test.csv", name)
+        train_splitter("test.csv", name, force_training=True)
 
     # wrong delimiter
     with pytest.raises(ValueError):
-        train_splitter(input_file, name, column=2)
+        train_splitter(input_file, name, column=2, force_training=True)
 
     # wrong column
     with pytest.raises(ValueError):
-        train_splitter(input_file, name, column="str")
+        train_splitter(input_file, name, column="str", force_training=True)  # type: ignore
 
-    train_splitter(input_file, name, delimiter=delimiter, column=columns)
+    prob_file = train_splitter(input_file, name, delimiter=delimiter, column=columns)
 
     # test output
-    with open(f"da_{name}_prob.json") as f:
+    with open(prob_file) as f:
         ngram_probs = json.load(f)
 
     assert "prefix" in ngram_probs

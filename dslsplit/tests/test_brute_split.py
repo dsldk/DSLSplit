@@ -1,22 +1,21 @@
-"""Testing fastws exists service."""
-import os
-import requests
+"""Testing fastws brute split and mixed mode."""
 from fastapi import status
+from fastapi.testclient import TestClient
+from os import environ
 
-from lextools import CONFIG
+environ["ENABLE_SECURITY"] = "false"
+from dslsplit.app import app
 
+client = TestClient(app)
 
-HOST = f"http://{CONFIG.get('app', 'host')}:{CONFIG.get('app', 'port')}"
 RESPONSE_KEYS = {"word", "splits", "description", "method"}
 
 
 def test_splitter_service() -> None:
     """Test compound splitter API"""
 
-    url = f"{HOST}/split"
     test_lemmas = ["operakoncert"]
-
-    response = requests.get(url + f"/{test_lemmas[0]}")
+    response = client.get(f"/split/{test_lemmas[0]}")
 
     assert response.status_code == status.HTTP_200_OK
 
@@ -31,14 +30,12 @@ def test_splitter_service() -> None:
 def test_mixed_method() -> None:
     """Test the mixed method."""
 
-    url = f"{HOST}/split"
     lemma_no_careful_split = "badeand"
 
     for method in ("mixed", "careful", "brute"):
         response_method = "brute" if method == "mixed" else method
-        response = requests.get(
-            os.path.join(url, f"{lemma_no_careful_split}?method={method}")
-        )
+        response = client.get(f"/split/{lemma_no_careful_split}?method={method}")
+        assert response.status_code == status.HTTP_200_OK
         json = response.json()
         assert json.keys() == RESPONSE_KEYS
         assert json["method"] == response_method
