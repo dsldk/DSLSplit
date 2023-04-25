@@ -5,6 +5,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi_simple_security import api_key_router, api_key_security
+from pathlib import Path
 from starlette.responses import PlainTextResponse
 
 from dslsplit import CONFIG, logger
@@ -26,7 +27,9 @@ logger.info(f"Security: {security_str}")
 title = CONFIG.get("splitter", "title")
 description = CONFIG.get("splitter", "description")
 # compound_split_probabilities = CONFIG.get("splitter", "prob_file")
-word_file_path = CONFIG.get("splitter", "word_file")
+current_dir = current_dir = Path(__file__).resolve().parent
+word_file_path = str(current_dir / CONFIG.get("splitter", "word_file"))
+
 
 app = FastAPI(
     title=title,

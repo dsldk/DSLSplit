@@ -44,6 +44,8 @@ def train_splitter(
     if not isinstance(column, int):
         column = int(column)
 
+    if not os.path.exists(lemma_file):
+        raise FileNotFoundError(f"Cannot find file {lemma_file}")
     lemmas = pd.read_csv(lemma_file, sep=delimiter, usecols=[column], names=["lemma"])
     lemmas = (
         lemmas.lemma.drop_duplicates().astype(str).values

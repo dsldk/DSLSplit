@@ -1,33 +1,97 @@
-# lextools
+# DSLSplit
 
 CompoundSplitter for Danish
 
 ## Download
 
 ```bash
-git clone https://github.com/dsldk/lextools
+git clone https://github.com/dsldk/dslsplit
 ```
 
-## Install dependencies
+## Setup
+
+DSLSplit needs some files to run. Three files are needed. Use either
 
 ```bash
-[ACTIVATE VIRTUAL INVORENMENT]
+git secret reveal
+```
+
+to unpack the .secret versions of the files from the repository. Or create empty versions of them:
+
+```bash
+touch apikeys.prod.txt
+touch apikeys.dev.txt
+touch secrets.env
+```
+
+## Run in Docker
+
+```bash
+docker compose --env-file=dev.env up --build
+OR
+docker compose --env-file=prod.env up --build
+```
+
+The webservice will now be accessible on localhost:9001  or localhost:8001 (production). Ports can be changed in the prod.env and dev.env files. Add "-d" for detached mode.
+
+## Run from terminal (without Docker)
+
+Setup virual environment:
+
+```bash
+ACTIVATE ENVIRONMENT
 pip install -r requirements.txt
-pip install -e .
+pip install .
 ```
 
-## Run in development mode
+Setup environment variables:
 
 ```bash
-cd lextools
-uvicorn app:app --reload
+export LOG_LEVEL=INFO
+export ENABLE_SECURITY=false
 ```
 
-## Run a Docker container
+Run:
 
 ```bash
-docker compose up -d
+cd dslsplit
+uvicorn app:app --PORT 8000
 ```
+
+The webservice should now be accessible on port 8000
+
+## API Key security
+
+Enable api key security with
+
+```bash
+export ENABLE_SECURITY=true
+```
+
+Supply the master keyword for Fastapi_simple_security in the `secrets.env` file:
+
+```env
+FASTAPI_SIMPLE_SECURITY_SECRET=some_secret_password
+```
+
+Use this password to create api-keys from the web interface if security is enabled:
+
+```url
+http://localhost:9001/docs
+```
+
+List any known api-keys in the apikeys..txt files with format:
+
+```csv
+NAME_OF_KEY;API_KEY;EXPIRATION_DATE
+```
+
+e.g.:
+
+```csv:
+test;2d3922ea-c5cc-4d08-8be5-4c71c23c29f1;2023-12-01
+```
+
 
 ## Using the modules
 
@@ -38,7 +102,7 @@ cd lextools
 python train_splitter.py -i /path/to/uniq_lemma_ddo.csv -n da_test
 ```
 
-## Description about the method
+## About the method
 
 It is possible to split a word in three modes:
 
@@ -62,8 +126,10 @@ For each splitting candidate, we calculate the probability, assigning a low prob
 
 The brute mode is not ideal for identifying the Danish compound joining elements, "e" and "s", due to the quality of the data used from the historic Danish dictionary.
 
+#### Self-evaluation
+
+By running the evaluation.py script the _careful_, _brute_, and _mixed_ modes are evaluation against 152 random compounds not included in the training data, with and without disregarding the joining element.
+
 #### Conclusion
 
 The brute mode implementation is a Danish compound splitter that uses a combination of manually split compounds and presumed compounds from historic Danish dictionaries. The implementation calculates probabilities for all character pentagrams containing known places where a split occurs and assigns probabilities to all possible splitting candidates of an unknown word. Although it has limitations, the brute mode implementation can identify most Danish compound joining elements.
-
-Our internal evaluation on 150 random compounds not appearing in the training data showed the following results: when ignoring errors caused by not identifying the "fuge" (joining) element (i.e., the split is in the correct place), the precision was 0.91 and recall was 0.99. When also considering the "fuge" element, the precision was 0.80 and recall was 0.98. These results are not great, but for the present work we further extended the compound splitting by ... [hvad du nu gjorde helt præcist, Nats!]. This means that the correct split not necessarily has to be the most probable split. When we evaluate our compound splitter while allowing the correct split to just be in one of the first 3 most probable splits, we see a precision of 0.98 and a recall of 0.99, which we believe is adequate for our purpose.
