@@ -1,35 +1,49 @@
 """FastAPI service for wordres."""
-import logging
-import os
+from os import environ
 import pandas as pd
-from fastapi import FastAPI
-from fastapi_simple_security import api_key_router
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi_simple_security import api_key_router, api_key_security
+from pathlib import Path
 from starlette.responses import PlainTextResponse
 
-from lextools import CONFIG
-from lextools.brute_split import load_probabilities, split_compound
-from lextools.train_splitter import train_splitter
+from dslsplit import CONFIG, logger
+from dslsplit.brute_split import load_probabilities, split_compound
+from dslsplit.train_splitter import train_splitter
+from dslsplit.splitter import Splitter2
 
-from lextools.splitter import Splitter2
 
-logging.basicConfig(
-    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO
+enable_security = environ.get("ENABLE_SECURITY")
+if enable_security is None:
+    raise ValueError("ENABLE_SECURITY not set")
+enable_security = enable_security.lower() in ("true", "1") and True or False
+security_str = (
+    "\033[1;32mENABLED\033[0m" if enable_security else "\033[1;31mDISABLED\033[0m"
 )
-
-logger = logging.getLogger(__name__)
+logger.info(f"Security: {security_str}")
 
 
 title = CONFIG.get("splitter", "title")
 description = CONFIG.get("splitter", "description")
 # compound_split_probabilities = CONFIG.get("splitter", "prob_file")
-word_file_path = CONFIG.get("splitter", "word_file")
+current_dir = current_dir = Path(__file__).resolve().parent
+word_file_path = str(current_dir / CONFIG.get("splitter", "word_file"))
+
 
 app = FastAPI(
     title=title,
     description="description",
 )
 
+if CONFIG.has_option("webservice", "origin"):
+    origins = CONFIG.get("webservice", "origin")
+    logger.info(f"Allowed origins: {origins}")
+    app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True)
+else:
+    logger.info("No CORS restrictions")
+
+logger.info(f"Adding API key security")
 app.include_router(api_key_router, prefix="/auth", tags=["_auth"])
 
 
@@ -49,23 +63,14 @@ splitter = Splitter2(language="da", lemma_list=list(lemmas)).load_from_filepath(
 )
 
 
-# @app.get("/split/{word}", response_class=JSONResponse)
-# def split(word: str, lang: str = "da", period: str | None = None) -> JSONResponse:
-#     """
-#     Return word split into tokens and scores and scores for each possible split
-
-#     - **word**: word to split into subtokens
-#     - **lang**: language ("da" for Danish or "de" for german)
-#     - **period**: for future functionality
-#     """
-#     splitter.language = lang
-#     splits = splitter.easy_split(word)
-#     return JSONResponse(content={"word": word, "splits": splits})
-
 brute_probabilities = load_probabilities()
 
 
-@app.get("/split/{word}", response_class=JSONResponse)
+@app.get(
+    "/split/{word}",
+    response_class=JSONResponse,
+    dependencies=[Depends(api_key_security)],
+)
 async def split(
     word: str, method: str = "mixed", variant: str = "nudansk", lang: str = "da"
 ) -> JSONResponse:
@@ -106,3 +111,7 @@ async def split(
         or "",
     }
     return JSONResponse(content=message)
+
+
+if not enable_security:
+    app.dependency_overrides[api_key_security] = lambda: None

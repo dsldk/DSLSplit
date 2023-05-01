@@ -1,34 +1,14 @@
-import logging
 import os
 import pickle
 import tempfile
 from collections import defaultdict
+from typing import List, Dict, Any
 
-from lextools import CONFIG
-
-logging.basicConfig(
-    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-
-import time
-from functools import wraps
-
-
-def timeit(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        start = time.perf_counter()
-        result = func(*args, **kwargs)
-        end = time.perf_counter()
-        logger.info(f"{func.__name__} took {end - start:.6f} seconds to complete")
-        return result
-
-    return wrapper
+from dslsplit import CONFIG, logger, timeit
 
 
 @timeit
-def train_splitter(data: list) -> dict:
+def train_splitter(data: list) -> Dict:
     """Train the splitter"""
     # Count character pentagrams
     trigram_counts = defaultdict(int)
@@ -48,7 +28,7 @@ def train_splitter(data: list) -> dict:
 
 
 @timeit
-def load_probabilities(force_training: bool = False) -> dict:
+def load_probabilities(force_training: bool = False) -> Dict:
     """Load the trigram probabilities."""
     variants = CONFIG.get("brute", "variants")
     result = {}
@@ -72,7 +52,6 @@ def load_probabilities(force_training: bool = False) -> dict:
 
         data_files = CONFIG.get(f"brute_{variant}", "data_files").split(",")
         data_files = [item.split(":") for item in data_files]
-        print(data_files)
 
         data = []
         for data_file, preprocess_method in data_files:
@@ -87,7 +66,7 @@ def load_probabilities(force_training: bool = False) -> dict:
     return result
 
 
-def preprocess_data(data: list, todo: str = "") -> list:
+def preprocess_data(data: list, todo: str = "") -> List[str]:
     """Preprocess the data."""
     output = []
     for line in data:
@@ -103,9 +82,16 @@ def preprocess_data(data: list, todo: str = "") -> list:
     return output
 
 
-@timeit
-def split_compound(compound, probabilities: dict) -> dict:
+# @timeit
+def split_compound(
+    compound, probabilities: dict
+) -> Dict[str, str | List[Dict[str, str | float | List[str]]]]:
     """Split a compound word."""
+    # If a ngram is not in the ngram probability dictionary, assume a very low probability
+    very_low_probability = 1e-20
+    low_probability = 1e-10
+    large_probability = 1
+
     # Generate list of candidates
     candidates = []
     # Add candidates with plus sign between each character
@@ -120,15 +106,44 @@ def split_compound(compound, probabilities: dict) -> dict:
         elif compound[i] == "e" and compound[i - 1] != "+" and compound[i + 1] != "+":
             candidate = compound[:i] + "+e+" + compound[i + 1 :]
             candidates.append(candidate)
+        elif compound[i] == "-" and compound[i - 1] != "+" and compound[i + 1] != "+":
+            candidate = compound[:i] + "+-+" + compound[i + 1 :]
+            candidates.append(candidate)
+
     # Calculate scores for each candidate
     scores = []
     for candidate in candidates:
+        print("====", candidate, "====")
+        pentagrams_not_found = 0
         score = 1
         split_compound = "$$" + candidate + "__"
+        center_position = len(split_compound) / 2
         for i in range(2, len(split_compound) - 2):
             pentagram = split_compound[i - 2 : i + 3]
-            score *= probabilities.get(pentagram, 0.0)
+            if "+" not in pentagram:
+                continue
+            if not pentagram in probabilities and "+-+" not in pentagram:
+                pentagrams_not_found += 1
+            if "+-+" in pentagram or pentagram[0:2] == "-+" or pentagram[-2:] == "+-":
+                penta_prob = large_probability
+            elif pentagram in probabilities:
+                penta_prob = probabilities[pentagram]
+            elif "$" in pentagram or "_" in pentagram:
+                penta_prob = very_low_probability
+            else:
+                penta_prob = low_probability
+
+            # Penalize pentagrams that are close to the beginning or end of the word
+            position_score = 1 - abs(i - center_position) / center_position
+            penta_prob *= position_score**2
+            print(pentagram, position_score, penta_prob)
+            score *= penta_prob
+
+        if pentagrams_not_found == 5:
+            score = 0.0
+        print("Score:", score)
         scores.append(score)
+
     # Combine candidates with their scores
     results = list(zip(candidates, scores))
     # Remove candidates with 0.0 probability
@@ -155,6 +170,8 @@ if __name__ == "__main__":
     probabilities = load_probabilities(force_training=True)
     # Split the words
     WORDS = [
+        "askeskyen",
+        "askesky",
         "skaderede",
         "skaderer",
         "skaderes",

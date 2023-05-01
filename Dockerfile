@@ -9,7 +9,7 @@ ENV APP_HOME /code
 WORKDIR $APP_HOME
 COPY ./requirements.txt ./
 COPY ./setup.py ./
-COPY ./lextools ./lextools
+COPY ./dslsplit ./dslsplit
 
 # Install dependencies.
 RUN pip install -r requirements.txt
@@ -17,5 +17,5 @@ RUN pip install -e .
 
 # Run the web service on container startup. Here we use the uvicorn
 # webserver, with the FastAPI app.
-WORKDIR $APP_HOME/lextools
+WORKDIR $APP_HOME/dslsplit
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
