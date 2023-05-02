@@ -1,4 +1,4 @@
-name: Run tests on push to main
+name: Run tests on push to any branch
 
 on: [push]
 jobs:
@@ -9,7 +9,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
       with:
-        ref: main
+        ref: ${{ github.ref }}
 
     - name: Set up Python
       uses: actions/setup-python@v4
