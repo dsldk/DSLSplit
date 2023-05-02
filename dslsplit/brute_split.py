@@ -7,7 +7,7 @@ from typing import List, Dict, Any
 
 from dslsplit import CONFIG, logger, timeit
 
-current_dir = Path(__file__).resolve().parent
+current_dir = Path(__file__).parent.resolve()
 
 
 @timeit
