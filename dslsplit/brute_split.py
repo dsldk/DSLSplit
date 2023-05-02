@@ -2,9 +2,12 @@ import os
 import pickle
 import tempfile
 from collections import defaultdict
+from pathlib import Path
 from typing import List, Dict, Any
 
 from dslsplit import CONFIG, logger, timeit
+
+current_dir = Path(__file__).resolve().parent
 
 
 @timeit
@@ -55,7 +58,8 @@ def load_probabilities(force_training: bool = False) -> Dict:
 
         data = []
         for data_file, preprocess_method in data_files:
-            with open(data_file, "r") as f:
+            filepath = current_dir / data_file
+            with open(filepath, "r") as f:
                 data += preprocess_data(f.read().splitlines(), preprocess_method)
         data = list(set(data))
         probabilities = train_splitter(data)
