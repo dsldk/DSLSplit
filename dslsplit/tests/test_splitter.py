@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from fastapi import status
 from os import environ
+from pathlib import Path
 
 environ["ENABLE_SECURITY"] = "false"
 from dslsplit.app import app
@@ -11,6 +12,7 @@ from dslsplit.train_splitter import train_splitter
 
 
 client = TestClient(app)
+current_dir = Path(__file__).parent.resolve()
 
 
 def test_spliiter() -> None:
@@ -47,6 +49,7 @@ def test_training_splitter() -> None:
     """Test training of compound splitter from file."""
 
     input_file = "lemma_liste_test.csv"
+    input_file = str(current_dir / input_file)
     name = "test"
     delimiter = ";"
     columns = 0

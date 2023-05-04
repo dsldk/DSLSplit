@@ -4,6 +4,9 @@ import tempfile
 import json
 import pandas as pd
 from charsplit import training
+from pathlib import Path
+
+current_dir = Path(__file__).parent.resolve()
 
 
 def argparser():
@@ -44,6 +47,8 @@ def train_splitter(
     if not isinstance(column, int):
         column = int(column)
 
+    if not lemma_file[0] in ("~", "/", "\\"):
+        lemma_file = str(current_dir / lemma_file)
     if not os.path.exists(lemma_file):
         raise FileNotFoundError(f"Cannot find file {lemma_file}")
     lemmas = pd.read_csv(lemma_file, sep=delimiter, usecols=[column], names=["lemma"])
