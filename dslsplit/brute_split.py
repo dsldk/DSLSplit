@@ -11,34 +11,46 @@ current_dir = Path(__file__).parent.resolve()
 
 
 @timeit
-def train_splitter(data: list) -> Dict:
-    """Train the splitter"""
+def train_splitter(data: list) -> Dict[str, float]:
+    """Train the splitter.
+
+    Args:
+        data: List of compounds to train the splitter on.
+
+    Returns:
+        Dictionary of ngram probabilities."""
     # Count character pentagrams
-    trigram_counts = defaultdict(int)
+    ngram_counts = defaultdict(int)
     for compound in data:
         split_compound = f"$${compound}__"
         for i in range(2, len(split_compound) - 2):
-            trigram = split_compound[i - 2 : i + 3]
-            trigram_counts[trigram] += 1
+            ngram = split_compound[i - 2 : i + 3]
+            ngram_counts[ngram] += 1
 
-    # Calculate trigram probabilities
+    # Calculate ngram probabilities
     probabilities = {}
-    total_trigrams = sum(trigram_counts.values())
-    for trigram, count in trigram_counts.items():
-        probabilities[trigram] = count / total_trigrams
+    total_ngrams = sum(ngram_counts.values())
+    for ngram, count in ngram_counts.items():
+        probabilities[ngram] = count / total_ngrams
 
     return probabilities
 
 
 @timeit
-def load_probabilities(force_training: bool = False) -> Dict:
-    """Load the trigram probabilities."""
+def load_probabilities(force_training: bool = False) -> Dict[str, Dict[str, float]]:
+    """Load the ngram probabilities.
+
+    Args:
+        force_training: If True, don't use any previous training.
+
+    Returns:
+        Dictionary with probabilities with each language variant as key."""
     variants = CONFIG.get("brute", "variants")
     result = {}
     for variant in variants.split(","):
         variant = variant.strip()
-        # Try to unpickle trigram probabilities. If that fails, train the splitter
-        # and pickle the trigram probabilities.
+        # Try to unpickle ngram probabilities. If that fails, train the splitter
+        # and pickle the ngram probabilities.
         pickle_file = os.path.join(
             tempfile.gettempdir(), f"brute_split_probs_{variant}.pickle"
         )
@@ -70,8 +82,15 @@ def load_probabilities(force_training: bool = False) -> Dict:
     return result
 
 
-def preprocess_data(data: list, todo: str = "") -> List[str]:
-    """Preprocess the data."""
+def preprocess_data(data: List[str], todo: str = "") -> List[str]:
+    """Preprocess the data using specification in config file.
+
+    Args:
+        data: List of compounds to preprocess.
+        todo: What to do with the data. Options are: modernize_danish.
+    Returns:
+        List of preprocessed compounds
+    """
     output = []
     for line in data:
         if todo == "modernize_danish":
@@ -88,9 +107,17 @@ def preprocess_data(data: list, todo: str = "") -> List[str]:
 
 # @timeit
 def split_compound(
-    compound, probabilities: dict
+    compound: str, probabilities: Dict[str, float]
 ) -> Dict[str, str | List[Dict[str, str | float | List[str]]]]:
-    """Split a compound word."""
+    """Split a compound word using probability dictionary.
+
+    Args:
+        compound: The compound word to split.
+        probabilities: Dictionary of ngram probabilities.
+
+    Returns:
+        Dictionary with the following keys: word, splits, description, method.
+    """
     # If a ngram is not in the ngram probability dictionary, assume a very low probability
     very_low_probability = 1e-20
     low_probability = 1e-10

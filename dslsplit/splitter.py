@@ -1,7 +1,7 @@
-from typing import List, Tuple
-from charsplit.splitter import ngram_probs as de_ngram_probs
 import json
 import re
+from charsplit.splitter import ngram_probs as de_ngram_probs
+from typing import List, Tuple, Dict
 
 
 class Splitter2:
@@ -21,8 +21,12 @@ class Splitter2:
 
     def split_compound(self, word: str) -> List[Tuple[float, str, str]]:
         """Return list of possible splits, best first.
-        :param word: Word to be split
-        :return: List of all splits
+
+        Args:
+            word: Word to be split
+
+        Returns:
+            List of all splits
         """
 
         def cut_fuge(word_slice: str, language: str) -> tuple:
@@ -80,7 +84,6 @@ class Splitter2:
 
             # Extract all ngrams
             for k in range(len(word) + 1, 2, -1):
-
                 # Probability of first compound, given by its ending prob
                 if not pre_slice_prob and k <= len(pre_slice):
                     # The line above deviates from the description in the thesis;
@@ -128,7 +131,13 @@ class Splitter2:
         return sorted(scores, reverse=True)
 
     def load_from_filepath(self, filepath):
-        """Load a splitter for compound words."""
+        """Load a splitter for compound words.
+
+        Args:
+            filepath: Path to file with ngram probabilities.
+
+        Returns:
+            Splitter probablities."""
         with open(filepath) as f:
             ngram_probs = json.load(f)
 
@@ -137,7 +146,15 @@ class Splitter2:
         return self
 
     def easy_split(self, word: str, min_score: float = -0.2) -> list:
-        """Split compound into words."""
+        """Split compound into words.
+
+        Args:
+            word: Word to be split
+            min_score: Minimum score for a split to be returned
+
+        Returns:
+            List of all splits
+        """
         splits = self.split_compound(word)
         # Lower() because charsplit is developed for German nouns
         output = [(score, split) for score, *split in splits if score > min_score]

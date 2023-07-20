@@ -77,11 +77,14 @@ async def split(
     """
     Return word split into tokens and scores and scores for each possible split
 
-    - **word**: word to split into subtokens
-    - **lang**: language (Only "da" for Danish is supported)
-    - **method**: "mixed" (default), "careful" or "brute"
-    - **variant**: "nudansk" (default) or "yngrenydansk"
+    Args:
+        **word**: word to split into subtokens
+        **lang**: language (Only "da" for Danish is supported)
+        **method**: "mixed" (default), "careful" or "brute"
+        **variant**: "nudansk" (default) or "yngrenydansk"
 
+    Returns:
+        Dictionary with keys "word", possible "splits", "description" and "method".
     """
     if method not in ("mixed", "careful", "brute"):
         raise ValueError(f"Method {method} not supported")

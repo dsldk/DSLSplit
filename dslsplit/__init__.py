@@ -61,12 +61,6 @@ if console_handler is None:
     )
     logger.addHandler(console_handler)
 
-# LOCALPATH = dirname(__file__)
-# if LOCALPATH:
-#     LOCALPATH += sep
-# CONFIG = RawConfigParser(dict_type=MultiOrderedDict, strict=False)
-# CONFIG.read(("%sdefault.ini" % (LOCALPATH,), "%sconfig.ini" % (LOCALPATH,)))
-
 CONFIG = RawConfigParser(dict_type=MultiOrderedDict, strict=False)
 
 current_dir = Path(__file__).resolve().parent
