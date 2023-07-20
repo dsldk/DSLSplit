@@ -59,12 +59,11 @@ class Splitter2:
         word = word.lower()
 
         # If there is a hyphen in the word, return part of the word behind the last hyphen
-        match = re.search("(.*)-", word)
-        if match:
+        if "-" in word:
             return [
                 (
                     1.0,
-                    match.group(1),
+                    re.search("(.*)-", word.title()).group(1),
                     re.sub(".*-", "", word.title()),
                 )
             ]
@@ -156,15 +155,13 @@ class Splitter2:
         Returns:
             List of all splits
         """
-        if not self.lemma_list:
-            raise ValueError("Lemma list must be set before splitting")
         splits = self.split_compound(word)
         # Lower() because charsplit is developed for German nouns
         output = [(score, split) for score, *split in splits if score > min_score]
 
         verified = []
         for score, item in output:
-            ver_items = {}
+            ver_items = {"subtokens": []}
 
             ver_items["fuge"] = item[-1]
             split = item[:-1]
