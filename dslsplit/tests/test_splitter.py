@@ -7,6 +7,7 @@ from os import environ
 from pathlib import Path
 
 environ["ENABLE_SECURITY"] = "false"
+environ["FASTAPI_SIMPLE_SECURITY_API_KEY_FILE"] = ""
 from dslsplit.app import app
 from dslsplit.train_splitter import train_splitter
 

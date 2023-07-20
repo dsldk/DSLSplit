@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from os import environ
 
 environ["ENABLE_SECURITY"] = "false"
+environ["FASTAPI_SIMPLE_SECURITY_API_KEY_FILE"] = ""
 from dslsplit.app import app
 
 
