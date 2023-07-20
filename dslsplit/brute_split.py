@@ -20,25 +20,25 @@ def train_splitter(data: list) -> Dict[str, float]:
     Returns:
         Dictionary of ngram probabilities."""
     # Count character pentagrams
-    trigram_counts = defaultdict(int)
+    ngram_counts = defaultdict(int)
     for compound in data:
         split_compound = f"$${compound}__"
         for i in range(2, len(split_compound) - 2):
-            trigram = split_compound[i - 2 : i + 3]
-            trigram_counts[trigram] += 1
+            ngram = split_compound[i - 2 : i + 3]
+            ngram_counts[ngram] += 1
 
-    # Calculate trigram probabilities
+    # Calculate ngram probabilities
     probabilities = {}
-    total_trigrams = sum(trigram_counts.values())
-    for trigram, count in trigram_counts.items():
-        probabilities[trigram] = count / total_trigrams
+    total_ngrams = sum(ngram_counts.values())
+    for ngram, count in ngram_counts.items():
+        probabilities[ngram] = count / total_ngrams
 
     return probabilities
 
 
 @timeit
 def load_probabilities(force_training: bool = False) -> Dict[str, Dict[str, float]]:
-    """Load the trigram probabilities.
+    """Load the ngram probabilities.
 
     Args:
         force_training: If True, don't use any previous training.
@@ -49,8 +49,8 @@ def load_probabilities(force_training: bool = False) -> Dict[str, Dict[str, floa
     result = {}
     for variant in variants.split(","):
         variant = variant.strip()
-        # Try to unpickle trigram probabilities. If that fails, train the splitter
-        # and pickle the trigram probabilities.
+        # Try to unpickle ngram probabilities. If that fails, train the splitter
+        # and pickle the ngram probabilities.
         pickle_file = os.path.join(
             tempfile.gettempdir(), f"brute_split_probs_{variant}.pickle"
         )
