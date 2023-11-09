@@ -137,7 +137,7 @@ FASTAPI_SIMPLE_SECURITY_API_KEY_FILE=/path/to/apikeys.txt
 LOG_LEVEL=INFO
 ```
 
-The webservice should now be accessible on port _nnnn_ with some_secret_password as the master password that can be used to create api-keys to access the actual endpoints from localhost:8000/docs.
+The webservice should now be accessible on port _nnnn_ with some_secret_password as the master password that can be used to create api-keys to access the actual endpoints from localhost:nnnn/docs.
 
 ## Setup
 ### Train splitter probabilities
@@ -154,24 +154,3 @@ python train_splitter.py -i /path/to/lemma_list.csv -n output_name
 ## Endpoints
 
 See in the Swagger UI under `localhost:nnnn/docs`
-
-## Accessing the webservice
-
-```python
-import requests
-from json import loads
-
-URL = "http://localhost:nnnn"
-word = "husar"
-api_key = "2d3922ea-c5cc-4d08-8be5-4c71c23c29f1"
-params = {"lang": "da", "api-key": api_key}
-
-response = requests.get(f"{URL}/check/{word}", params=params)
-result = loads(response.text)
-# {"word":"husar","valid":true,"score":0.00024243456583721002}
-
-params = {"api-key": api_key}
-response = requests.get(f"{URL}/lang/{word}", params=params)
-result = loads(response.text)
-# [["da",0.00024243456583721002],["de",0.00021127065052605355],["da_lemma",0.0001922643763442915],["en",4.605676657984788e-06]]
-```
