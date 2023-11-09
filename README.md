@@ -104,6 +104,7 @@ LOG_LEVEL=WARNING
 PORT=nnnn
 ENABLE_SECURITY=true
 ```
+
 To create custom development or production modes, simply either change the respective environment files or create a new custom file. 
 
 To run Docker with the custom setup, remember to change the parameter `--env-file``
