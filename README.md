@@ -152,10 +152,7 @@ python train_splitter.py -i /path/to/lemma_list.csv -n output_name
 
 ## Endpoints
 
-See:
-
-* localhost:9002/docs (development)
-* localhost:8002/docs (production)
+See in the Swagger UI under `localhost:nnnn/docs`
 
 ## Accessing the webservice
 
