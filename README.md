@@ -38,7 +38,7 @@ The brute mode implementation is a Danish compound splitter that uses a combinat
 ## Download
 
 ```console
-git clone https://github.com/dsldk/lexiscore.git
+git clone https://github.com/dsldk/DSLSplit.git
 ```
 
 ## Security with API keys
@@ -121,7 +121,7 @@ pip install .
 Run with uvicorn:
 
 ```bash
-cd lexiscore
+cd dslsplit
 uvicorn app:app --PORT nnnn
 ```
 
